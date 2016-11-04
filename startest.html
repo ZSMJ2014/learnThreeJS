@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>three.js canvas - interactive particles</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+        body {
+
+            color: #ffffff;
+
+            background-color: #000000;
+
+            margin: 0px;
+
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+
+
+<script type="text/javascript" src="js/three.js"></script>
+<script type="text/javascript" src="js/stats.min.js"></script>
+<script src="js/Projector.js"></script>
+<script src="js/CanvasRenderer.js"></script>
+
+<script>
+    var container, stats;
+    var camera, scene, renderer;
+    var raycaster;
+    var mouse;
+    var PI2 = Math.PI * 2;
+    var cameraZ = 500;
+    var objectLength = 100;
+    var speed = 3;
+    var programFill = function (context) {
+        context.beginPath();
+        context.arc(0, 0, 0.5, 0, PI2, true);
+        context.fill();
+    };
+    var programStroke = function (context) {
+        context.lineWidth = 0.025;
+        context.beginPath();
+        context.arc(0, 0, 0.5, 0, PI2, true);
+        context.stroke();
+    };
+    var INTERSECTED;
+    init();
+    animate();
+    function init() {
+        container = document.createElement('div');
+        document.body.appendChild(container);
+        var info = document.createElement('div');
+        info.style.position = 'absolute';
+        info.style.top = '10px';
+        info.style.width = '100%';
+        info.style.textAlign = 'center';
+        info.innerHTML = 'star test';
+        container.appendChild(info);
+        camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 10000);
+        camera.position.set(0, 300, cameraZ);
+        scene = new THREE.Scene();
+        for (var i = 0; i < objectLength; i++) {
+            var particle = new THREE.Sprite(new THREE.SpriteCanvasMaterial({
+                color: Math.random() * 0x808080 + 0x808080,
+                program: programFill,
+                opacity: Math.random() * 1
+            }));
+            particle.position.x = Math.random() * 800 - 400;
+            particle.position.y = Math.random() * 800 - 400;
+            //particle.position.z = Math.random() * 800 - 400;
+            //particle.scale.x = particle.scale.y = Math.random() * 20 + 20;
+            particle.z = 0;
+            particle.scale.x = particle.scale.y = 20;
+            scene.add(particle);
+        }
+
+        //
+
+        raycaster = new THREE.Raycaster();
+        mouse = new THREE.Vector2();
+        renderer = new THREE.CanvasRenderer();
+        renderer.setClearColor(0x000000);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+
+
+        document.addEventListener('mousemove', onDocumentMouseMove, false);
+        //
+        window.addEventListener('resize', onWindowResize, false);
+    }
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    function onDocumentMouseMove(event) {
+        event.preventDefault();
+        mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+        mouse.y = -( event.clientY / window.innerHeight ) * 2 + 1;
+    }
+    //
+    function animate() {
+        requestAnimationFrame(animate);
+        render();
+//        stats.update();
+    }
+    var radius = 600;
+    var theta = 0;
+    function render() {
+        // rotate camera
+        //theta += 0.1;
+        //camera.position.x = radius * Math.sin( THREE.Math.degToRad( theta ) );
+        //camera.position.y = radius * Math.sin( THREE.Math.degToRad( theta ) );
+        //camera.position.z = radius * Math.cos( THREE.Math.degToRad( theta ) );
+//        camera.position.z -= speed;
+//        if(camera.position.z<20) {
+//            camera.position.z = cameraZ;
+//        }
+        //camera.lookAt( scene.position );
+        //camera.updateMatrixWorld();
+
+        //opacity varying
+        scene.traverse(function (object) {
+            if (object instanceof THREE.Sprite) {
+                object.material.opacity += 0.05;
+                if (object.material.opacity > 0.95) {
+                    object.material.opacity = 0.1;
+                }
+            }
+        });
+
+        // find intersections
+        raycaster.setFromCamera(mouse, camera);
+        var intersects = raycaster.intersectObjects(scene.children);
+
+        if (intersects.length > 0) {
+            if (INTERSECTED != intersects[0].object) {
+                if (INTERSECTED) INTERSECTED.material.program = programStroke;
+                INTERSECTED = intersects[0].object;
+                INTERSECTED.material.program = programStroke;
+            }
+        } else {
+            if (INTERSECTED) INTERSECTED.material.program = programFill;
+            INTERSECTED = null;
+        }
+        renderer.render(scene, camera);
+    }
+</script>
+
+</body>
+</html>
