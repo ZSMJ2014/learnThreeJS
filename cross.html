@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>Title</title>
+</head>
+<body>
+<div style="width: 1200px;height: 800px" id="container"></div>
+<script src="js/three.js"></script>
+<script src="js/Detector.js"></script>
+<script src="js/stats.min.js"></script>
+<script type="x-shader/x-vertex" id="vertexshader">
+			attribute float size;
+			attribute vec3 colors;
+			varying vec3 vColor;
+			void main() {
+			    vColor=colors;
+				vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+				gl_PointSize = size * ( 300.0 / -mvPosition.z );
+				gl_Position = projectionMatrix * mvPosition;
+
+			}
+
+</script>
+<script type="x-shader/x-fragment" id="fragmentshader">
+			uniform vec3 color;
+			uniform sampler2D texture;
+            varying vec3 vColor;
+			void main() {
+				gl_FragColor = vec4( color * vColor, 1.0 );
+                gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord );
+
+			}
+
+</script>
+<script>
+    var renderer, scene, camera, stats, rayCaster, mouse, projector;
+    var WIDTH = window.innerWidth;
+    var HEIGHT = window.innerHeight;
+    init();
+    function init() {
+        camera = new THREE.PerspectiveCamera(75, WIDTH / HEIGHT, 1, 10000);
+        camera.position.z = 500;
+        scene = new THREE.Scene();
+        scene.add(camera);
+        projector = new THREE.Projector();
+        var uniforms = {
+            color: {value: new THREE.Color(0xFFFFFF)},
+            texture: {value: getTexture()}
+        };
+//        var sphere= new THREE.SphereGeometry(20,64,64);
+        geometry = new THREE.BufferGeometry();
+//        geometry.fromGeometry(sphere);
+        var totalStars = 1000;
+        var positions = new Float32Array(totalStars * 3);
+        var sizes = new Float32Array(totalStars);
+        var colors = new Float32Array(totalStars * 3);
+        var color = new THREE.Color(0x9BB0FF);
+        for (var i = 0, i3 = 0; i < totalStars; i++, i3 += 3) {
+            positions[i3] = ( Math.random() * 2 - 1 ) * WIDTH / 2;
+            positions[i3 + 1] = ( Math.random() * 2 - 1 ) * HEIGHT / 2;
+            positions[i3 + 2] = ( Math.random() * 2 - 1 ) * 800;
+            sizes[i] = 50;
+            colors[i3] = color.r;
+            colors[i3 + 1] = color.g;
+            colors[i3 + 2] = color.b;
+        }
+        geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.addAttribute('colors', new THREE.BufferAttribute(colors, 3));
+        geometry.addAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+        var material = new THREE.ShaderMaterial({
+            uniforms: uniforms,
+            vertexShader: document.getElementById('vertexshader').textContent,
+            fragmentShader: document.getElementById('fragmentshader').textContent,
+            blending: THREE.AdditiveBlending,
+            depthTest: false,
+            transparent: true
+        });
+        var particleSystem = new THREE.ParticleSystem(geometry, material);
+        scene.add(particleSystem);
+        renderer = new THREE.WebGLRenderer();
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(WIDTH, HEIGHT);
+        var container = document.getElementById('container');
+        container.appendChild(renderer.domElement);
+        // add a very light ambient light
+        var globalLight = new THREE.AmbientLight(0xccffcc);
+        globalLight.color.setRGB(0.1, 0.1, 0.1);
+        scene.add(globalLight);
+        document.addEventListener('mousemove', this.onDocumentMouseMove.bind(this), false);
+        document.addEventListener('mouseover', this.onDocumentMouseMove.bind(this), false);
+        renderer.render(scene, camera);
+    }
+    function getTexture() {
+
+        var showShell = false;
+
+        // create the star texture
+        var canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+
+        //var col = new THREE.Color(color);
+        var context = canvas.getContext('2d');
+
+        var gradient = context.createRadialGradient(
+                canvas.width / 2,
+                canvas.height / 2,
+                0,
+                canvas.width / 2,
+                canvas.height / 2,
+                canvas.width / 2
+        );
+
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
+        gradient.addColorStop(0.25, 'rgba(205, 205, 224, 0.5)');
+        gradient.addColorStop(0.5, 'rgba(125, 100, 0, 0.1)');
+
+        if (showShell) {
+            gradient.addColorStop(0.88, 'rgba(0, 20, 0, 0.75)');
+            gradient.addColorStop(0.92, 'rgba(255, 255, 255, 0.1)');
+        }
+
+        gradient.addColorStop(1.0, 'rgba(0,0,0,0.0)');
+
+        context.fillStyle = gradient;
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        var texture = new THREE.Texture(canvas);
+        texture.needsUpdate = true;
+
+        return texture;
+    }
+    onDocumentMouseDown = function (event) {
+        event.preventDefault();
+
+        var vector = new THREE.Vector3(( event.clientX / window.innerWidth ) * 2 - 1, -( event.clientY / window.innerHeight ) * 2 + 1, 0.5);
+        this.projector.unprojectVector(vector, this.camera);
+
+        var rayCaster = new THREE.Raycaster(this.camera.position, vector.sub(this.camera.position).normalize());
+        var intersects = rayCaster.intersectObjects(this.meshes);
+
+        if (intersects.length > 0) {
+
+            console.log('hovered', intersects[0].object);
+            // intersects[ 0 ].object.material.color.setHex( Math.random() * 0xffffff );
+
+            var particle = new THREE.Particle();
+            particle.position = intersects[0].point;
+            particle.scale.x = particle.scale.y = 8;
+            this.scene.add(particle);
+            //console.log( intersects[ 0 ].object.parent.parent.position );
+
+
+            this.trackingOrbit = intersects[0].object;
+
+            //console.log( intersects[ 0 ].object.parent.parent.position );
+
+            // move the camera to the specific space object
+            //this.camera.lookAt( intersects[ 0 ].object.position );
+
+            // move the camera to the object
+            //this.camera.position.x = intersects[ 0 ].object.parent.position.x;
+            //this.camera.position.y = intersects[ 0 ].object.parent.position.y;
+            //this.camera.position.z = intersects[ 0 ].object.parent.position.z;
+
+            //this.fixCameraToObject = true;
+        }
+    };
+
+
+    onDocumentMouseMove = function (event) {
+        event.preventDefault();
+
+        var $this = this;
+
+        var vector = new THREE.Vector3(( event.clientX / window.innerWidth ) * 2 - 1, -( event.clientY / window.innerHeight ) * 2 + 1, .5);
+        this.projector.unprojectVector(vector, this.camera);
+
+        var rayCaster = new THREE.Raycaster(this.camera.position, vector.sub(this.camera.position).normalize());
+
+        $('#tooltip').remove();
+        _.each($this.markers, function (marker, idx) {
+            $this.scene.remove(marker);
+        });
+
+        var intersects = rayCaster.intersectObjects(this.meshes, true);
+        var mouse = {x: 0, y: 0, z: 1};
+
+        //this where begin to transform the mouse cordinates to three,js cordinates
+        mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+        mouse.y = -( event.clientY / window.innerHeight ) * 2 + 1;
+
+        //this vector caries the mouse click cordinates
+        var mouse_vector = new THREE.Vector3(0, 0, 0);
+        mouse_vector.set(mouse.x, mouse.y, mouse.z);
+
+        this.projector.unprojectVector(mouse_vector, this.camera);
+
+        var direction = mouse_vector.sub(this.camera.position).normalize();
+
+        rayCaster.set(this.camera.position, direction);
+
+
+        // check if the user moves the mouse over a planet or host star
+        _.each(this.meshes, function (mesh, idx) {
+            //console.log(mesh);
+            if (mesh.position) {
+                intersects = rayCaster.intersectObject([mesh]);
+
+                if (intersects.length > 0) {
+                    console.log(intersects[0].object);
+                }
+            }
+        });
+
+        $('#canvas').css({'opacity': 0.0});
+
+        if (Settings.showStars) {
+
+            // check if user moves the mouse near a star
+            _.each(this.stars, function (star, idx) {
+
+                var pos = Utils.getPosition2D(star, $this.camera, $this.projector);
+
+                if (pos.x >= (event.clientX - 5) && pos.x <= (event.clientX + 5)) {
+
+                    if (pos.y >= (event.clientY - 5) && pos.y <= (event.clientY + 5)) {
+
+                        var tooltipView = new TooltipView(event, star);
+
+                        // render a canvas circle at the screen position
+                        $this.canvas = document.getElementById('canvas');
+                        $this.canvas.width = 24;
+                        $this.canvas.height = 24;
+                        $this.currentStar.properties = star.properties;
+
+                        var context = $this.canvas.getContext('2d');
+                        context.beginPath();
+                        context.arc(12, 12, 11, 0, 2 * Math.PI, false);
+                        context.lineWidth = 2;
+                        context.strokeStyle = '#ff0000';
+                        context.stroke();
+
+                        $('#canvas').css({
+                            'left': pos.x - 12 + 'px',
+                            'top': pos.y - 12 + 'px',
+                            'opacity': 1.0
+                        });
+
+                    }
+                }
+            });
+
+        }
+
+    };
+</script>
+</body>
+</html>
