@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div style="width: 1200px;height: 800px" id="container"></div>
+
+<script src="js/three.js"></script>
+<script src="js/Detector.js"></script>
+<script src="js/stats.min.js"></script>
+<script>
+    if (!Detector.webgl)
+        Detector.addGetWebGLMessage();
+    var renderer, scene, camera, stats, rayCaster, mouse;
+    var WIDTH = window.innerWidth;
+    var HEIGHT = window.innerHeight;
+    init();
+    function init() {
+        camera = new THREE.PerspectiveCamera(40, WIDTH / HEIGHT, 1, 10000);
+        camera.position.z = 100;
+        scene = new THREE.Scene();
+        var geometry = new THREE.SphereBufferGeometry(5, 32, 64);
+//        var total=1000;
+//        var positions=new Float32Array(total*3);
+//        var colors=new Float32Array(total * 3);
+//        for(var i=0;i<total;i++){
+//            positions[i+ 0] = ( Math.random() * 2 - 1 ) * 200;
+//            positions[i + 1] = ( Math.random() * 2 - 1 ) * 200;
+//            positions[i + 2] = ( Math.random() * 2 - 1 ) * 200;
+//            colors[i]=153;
+//            colors[i+1]=113;
+//            colors[i+2]=59;
+//        }
+//        geometry.addAttribute('position', new THREE.BufferAttribute(positions, 3));
+//        geometry.addAttribute( 'customColor', new THREE.BufferAttribute( colors, 3 ) );
+        var material = new THREE.MeshLambertMaterial({
+            color: 0xffff00,
+            emissive: 0xff0000
+        });
+        var particleSystem = new THREE.Mesh(geometry, material);
+        scene.add(particleSystem);
+        var light = new THREE.DirectionalLight();
+        light.position.set(2, 5, 3);
+        scene.add(light);
+        renderer = new THREE.WebGLRenderer();
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(WIDTH, HEIGHT);
+        var container = document.getElementById('container');
+        container.appendChild(renderer.domElement);
+        renderer.render(scene, camera);
+    }
+</script>
+</body>
+</html>
