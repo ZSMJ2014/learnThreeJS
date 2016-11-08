@@ -50,7 +50,7 @@
     animate();
     function init() {
         camera = new THREE.PerspectiveCamera(75, WIDTH / HEIGHT, 1, 10000);
-        camera.position.z = 500;
+        camera.position.z = 800;
         scene = new THREE.Scene();
         scene.add(camera);
 //        projector = new THREE.Projector();
@@ -108,9 +108,9 @@
         var globalLight = new THREE.AmbientLight(0xccffcc);
         globalLight.color.setRGB(0.1, 0.1, 0.1);
         scene.add(globalLight);
-        $(document).ready(function () {
-            $(document).mousemove(onDocumentMouseMove);
-        });
+//        $(document).ready(function () {
+//            $(document).mousemove(onDocumentMouseMove);
+//        });
     }
     function getTexture() {
 
@@ -263,10 +263,15 @@
     function render() {
         var time = Date.now() * 0.005;
         var sizes = geometry.attributes.size.array;
-        for (var i = 0; i < 1000; i++) {
-            sizes[i] = 10 * ( 1 + Math.sin(0.1 * i + time) );
+        var positions = geometry.attributes.position.array;
+        for (var i = 0, i3 = 0; i < 1000; i++, i3 += 3) {
+            sizes[i] = 20 * ( 1 + Math.sin(0.1 * i + time) );
+            positions[i3] += 1;
+            if (positions[i3] > WIDTH / 2)
+                positions[i3] = -1 * WIDTH / 2;
         }
         geometry.attributes.size.needsUpdate = true;
+        geometry.attributes.position.needsUpdate = true;
         renderer.render(scene, camera);
     }
 
