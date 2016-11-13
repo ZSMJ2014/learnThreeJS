@@ -122,14 +122,28 @@
                 this.d.textContent = result;
             }
             else {
-                var div = $('#today');
+                var div = $("#" + target);
                 div.empty();
-                div.append('<span class="prefix" style="font-size:56px;color:#F8BC38;vertical-align:super"></span>');
-                var numString = new Number(value).toString();
-                for (var i = 0; i < numString.length; i++) {
-                    div.append('<span class="number" style="background-color:rgba(12, 218, 255, 0.8);display:inline-block;letter-spacing:0.02em;text-indent:0.02em;height:1em;line-height:1em;font-size:80.91740512052084px;letter-spacing:0.02em;margin-right:0.2em;">' + numString[i] + '</span>');
+                if (target === 'today') {
+                    div.append('<span class="prefix" style="font-size:20px;color:#FCE5C1;vertical-align:super">今日收到数据&nbsp;&nbsp;</span>');
+                    for (var i = 0; i < result.length; i++) {
+                        if (result[i] == ',' || result[i] == '.')
+                            div.append('<span class="number" style="background-color:transparent;display:inline-block;letter-spacing:0.02em;text-indent:0.02em;height:1em;line-height:1em;font-size:20px;letter-spacing:0.02em;margin-right:0.2em;">' + result[i] + '</span>');
+                        else
+                            div.append('<span class="number" style="background-color:rgba(12, 218, 255, 0.8);display:inline-block;letter-spacing:0.02em;text-indent:0.02em;height:1em;line-height:1em;font-size:21px;letter-spacing:0.02em;margin-right:0.2em;">' + result[i] + '</span>');
+                    }
+                    div.append('<span class="suffix" style="font-size:20px;color:#FCE5C1;vertical-align:super">行</span>');
+                } else if (target == 'total') {
+                    div.append('<span class="prefix" style="font-size:20px;color:#FCE5C1;vertical-align:super">累计收到数据&nbsp;&nbsp;</span>');
+                    for (var i = 0; i < result.length; i++) {
+                        if (result[i] == ',' || result[i] == '.')
+                            div.append('<span class="number" style="background-color:transparent;display:inline-block;letter-spacing:0.02em;text-indent:0.02em;height:1em;line-height:1em;font-size:20px;letter-spacing:0.02em;margin-right:0.2em;">' + result[i] + '</span>');
+                        else
+                            div.append('<span class="number" style="background-color:rgba(12, 218, 255, 0.8);display:inline-block;letter-spacing:0.02em;text-indent:0.02em;height:1em;line-height:1em;font-size:21px;letter-spacing:0.02em;margin-right:0.2em;">' + result[i] + '</span>');
+                    }
+                    div.append('<span class="suffix" style="font-size:20px;color:#FCE5C1;vertical-align:super">行</span>');
                 }
-                div.append('<span class="suffix" style="font-size:42px;color:#F8BC38;vertical-align:super">条</span></div>');
+
                 // this.d.innerHTML = result;
             }
         };
